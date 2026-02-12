@@ -1,0 +1,896 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+@*<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+    integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />*@
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+
+    body{
+        background-color:darkslategrey!important;
+    }
+
+    .toolbar {
+        display: flex;
+        flex-direction: row;
+        background-color: #7AC143;
+        border-radius: 20px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        transition: box-shadow 0.3s;
+        padding: 10px;
+        column-gap: 20px;
+        margin: 0 20px 0 20px;
+        padding-left: 40px;
+        margin-bottom:10px;
+    }
+
+        .toolbar:hover {
+            box-shadow: 0 0 10px black;
+        }
+
+    #canvas-placeholder {
+        width: 100%;
+        height: 100%;
+    }
+
+    #canvas-name-container {
+        background:;
+        border-radius: 12px 12px 0 0;
+        border: 2px solid #e94560;
+        border-bottom: none;
+        margin-top: 10px;
+        padding: 5px 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        position: relative;
+        margin-left: 20px;
+        width: calc(100vw - 40px);
+    }
+
+
+    #canvas-name {
+        width: fit-content;
+        margin: 0;
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 500;
+        letter-spacing: 2px;
+        font-family: 'Trebuchet MS', 'Lucida Sans', Arial, sans-serif;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 1;
+    }
+
+    #explaination {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        cursor: pointer;
+    }
+
+        #explaination i {
+            transition: box-shadow 0.3s;
+            border-radius:10px;
+        }
+
+        #explaination i:hover {
+            box-shadow: 0 0 10px black;
+        }
+</style>
+
+<div class="toolbar">
+    <div class="select-layout d-flex flex-direction-row">
+        @(Html.Kendo().ComboBox()
+    .Name("LayoutNamesComboBox")
+    .DataTextField("Name")
+    .DataValueField("Id")
+    .Placeholder("Search for Screen")
+    .Filter("contains")
+    .Suggest(true)
+    .Template("#= Name # : #= Id #")
+    .FooterTemplate("Total <strong>#: instance.dataSource.total() #</strong> items found")
+    .MinLength(0)
+    .HtmlAttributes(new { style = "width: 300px;" })
+    .Height(520)
+    .DataSource(source =>
+    {
+        source.Read(read =>
+        {
+            read.Action("GetLayoutNames", "Canvas");
+        });
+    })
+)
+        @* ==========*@
+        @*@(Html.Kendo().Button()
+    .Name("PickLayout")
+    .Content("<i class=\"fa-solid fa-magnifying-glass\"></i>")
+)*@
+
+
+
+    </div>
+
+    @*===========*@
+    @(Html.Kendo().Button()
+    .Name("ShareBtn")
+    .HtmlAttributes(new { style = "display:none" })
+    .Content("Share <i style=\"margin-left:5px\" class=\"fa-solid fa-share\"></i>")
+    .Events(e => e.Click("() => {console.log('sahring')}"))
+)
+    @*=====*@
+    @(Html.Kendo().Button()
+    .Name("NewBtn")
+    .Content("New <i style=\"margin-left:5px\" class=\"fa-solid fa-circle-plus\"></i>")
+    .Events(e => e.Click("() => {console.log('hello world new')}"))
+)
+    @*========*@
+
+    @(Html.Kendo().Button()
+    .Name("FullscreenBtn")
+    .Content("Fullscreen <i style=\"margin-left:5px\" class=\"fa-solid fa-arrow-up-right-from-square\"></i>")
+    .Events(e => e.Click("() => {console.log('fullscreen')}"))
+)
+    @*========*@
+
+    @(Html.Kendo().Button()
+    .Name("DeleteLayoutBtn")
+    .HtmlAttributes(new { style = "color: white; background-color:#dc3545; display:none;" })
+    .Content("Delete <i style=\"margin-left:5px\" class=\"fa-solid fa-trash\"></i>")
+    .Events(e => e.Click("showDeleteConfirm"))
+)
+    @*========*@
+
+    @(Html.Kendo().Button()
+    .Name("openAiPopupBtn")
+    .HtmlAttributes(new { style = "color: white; background-color:#17a2b8;" })
+    .Content("AI <i style=\"margin-left:5px\" class=\"fa-solid fa-microchip\"></i>")
+    .Events(e => e.Click("showAiPopup"))
+)
+
+
+
+
+    <div class="vert-divider" style="width:3px;height:inherit; background-color:black;"></div>
+
+    <div id="explaination" style="">
+        <i class="fa-solid fa-circle-info" style="font-size: large; height: fit-content"></i>
+    </div>
+
+
+
+</div>
+
+
+
+@*failure screen*@
+<div id="failed-to-find" style="
+    padding: 16px 24px;
+    background-color: #ffe5e5;
+    border: 1px solid #ffb3b3;
+    color: #a30000;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display:none;
+">
+    Failed to find the layout
+</div>
+
+@*datasource modal*@
+
+
+@Html.Partial("~/Views/Canvas/SelectDataModal.cshtml")
+
+
+@*canvas *@
+@*<div id="canvas-name-container">
+        <h2 id="canvas-name">placeholder</h2>
+    </div>*@
+
+@*<div style=" padding-top: 20px;">
+        <div id="title-container" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 5px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05); border-radius: 50px 50px 0 0; display: inline-block; border: 2px solid #e94560; position: relative; width:calc(100vw - 40px);">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(233,69,96,0.1) 0%, transparent 100%); border-radius: 50px 50px 0 0; pointer-events: none;"></div>
+            <h2 id="canvas-name" style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 500; letter-spacing: 2px; font-family: 'Trebuchet MS', 'Lucida Sans', Arial, sans-serif; text-transform: uppercase; position: relative; z-index: 1;"></h2>
+        </div>
+    </div>*@
+
+<div style="width: 100vw; height: calc(100vh - 150px); padding: 0 20px 0 20px; ">
+    <div class="" id="canvas-placeholder"></div>
+</div>
+
+
+
+
+
+
+
+@*Modal to make a new layout --------------------------*@
+
+
+@Html.Partial("~/Views/Canvas/Popups.cshtml")
+
+
+
+
+
+<script type="text/javascript">
+    // Script responsible for tracking currently selected datsource and toolbar
+
+
+
+
+    const canvasEl = document.querySelector("#canvas-placeholder");
+    const params = new URLSearchParams(window.location.search);
+    const isFullscreen = params.get("isVideoWall") === "true";
+    const $title = $("#canvas-name-container");
+    if (isFullscreen) {
+        console.log("Fullscreen mode is ON");
+        $(".toolbar").hide();
+        $("#section-nav").hide();
+        canvasEl.style.width = "100vw";
+        canvasEl.style.height = "100vh";
+        $(canvasEl).parent().css("padding", "0px");
+        $title.css('width', "100vw");
+
+        $title.css('margin', "0")
+    }
+
+
+    //responsible for making the canvas "dynamic". Resizes to fit screen on load
+    // but doesnt resize afterwards
+
+    //$title.css('width', $title.width()+4 + "px");
+    canvasEl.style.width = Math.round(canvasEl.offsetWidth / 10) * 10 + "px"; // freezes width in pixels
+    canvasEl.style.height = Math.round(canvasEl.offsetHeight / 10) * 10 + "px"; // freezes width in pixels
+
+
+
+    // Code for the toolbar -----------------------------------
+    function setupToolbar() {
+
+        $("#explaination").kendoTooltip({
+            content: function (e) {
+                return `
+                    <div style="width:500px;height:400px;padding:20px;background-color:white; "
+                    class="d-flex flex-column justify-content-around align-items-center">
+
+                        <img style="height:70%" src='Images/canvas-clone.png' />
+                        <p style="font-weight:bold;" >  Screens are made using templates. It is possible to make a new Screen
+                        by cloning the template of an existing Screen.
+
+                        <span style="display:none;">
+                        Any edits made to a template will affect all the
+                        Screens that use it. Editting the datasource(Camera/reports) will only affect the current Screen. </p>
+                        </span>
+                    </div>
+                `;
+            }
+        });
+        //
+
+
+
+
+        $("#LayoutNamesComboBox").data("kendoComboBox").bind("change", function (e) {
+
+            var val = $("#LayoutNamesComboBox").data("kendoComboBox").dataItem();
+            console.log("picked layout" + JSON.stringify(val));
+            if (val === undefined) {
+                return;
+            }
+            window.location.search = `?Currentlayout=${val.Id}`
+
+
+        });
+
+
+
+        //$("#PickLayout").click(() => {
+        //    var val = $("#LayoutNamesComboBox").data("kendoComboBox").dataItem();
+        //    console.log("picked layout" + JSON.stringify(val));
+        //    if (val === undefined) {
+        //        return;
+        //    }
+        //    window.location.search = `?Currentlayout=${val.Id}`
+
+        //});
+        //---------
+        $("#NewBtn").click(() => {
+            var val = $("#LayoutNamesComboBox").data("kendoComboBox").dataItem();
+            console.log("creating new layout");
+
+            $("#newLayoutWindow").data("kendoWindow").center().open();
+            $("#layoutWizard").data("kendoWizard").select(0);
+
+
+        });
+
+        $("#FullscreenBtn").click(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("isVideoWall", "true");
+
+            window.open(url.toString(), "_blank");
+
+        });
+        //--------------------
+
+
+        //-------------------------
+
+    }
+
+
+
+
+
+    // ------------------- Sending and receiving data sources to Canvas ------------------
+
+
+    var selectedCardId = null;
+    var selectedLayoutId = null;
+    var layoutCardDatasource;
+    //
+
+    document.querySelector("#canvas-placeholder").addEventListener("EDIT_DATASOURCE_CARD_SELECTED", e => {
+        console.log(e.detail);
+        layoutCardDatasource = e.detail.layoutCardDatasource; //is empty object if first time
+        selectedCardId = e.detail.cardId;
+        selectedLayoutId = e.detail.layoutId;
+        console.log(layoutCardDatasource);
+        console.log("opening the data source lists for card " + selectedCardId);
+        OpenSelectContainerModal();
+
+
+
+    });
+    //
+
+    function sendDatasourceToCanvas() {
+        // data is sent by object reference, this fucntion is repurposed
+        console.log("sending the datasource to canvas")
+        console.log(layoutCardDatasource);
+        document.querySelector("#canvas-placeholder").refreshCard(selectedCardId);
+    }
+
+
+
+    //--------------------------------------//
+
+    $(document).ready(async function () {
+        setupToolbar();
+        //setupLayoutModal();
+    });
+
+
+</script>
+
+
+
+@*Document fragments for the 2 different types of cards ===========================================================*@
+<style>
+    /* Main video container */
+    .FrameContainer {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+        /* Video fills parent while keeping aspect ratio */
+        .FrameContainer video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            background: black;
+        }
+
+    video {
+        pointer-events: none;
+    }
+
+
+    /*==========*/
+    .VideoText {
+        position: absolute;
+        top: 12px;
+        color: white;
+        z-index: 20;
+        width: calc(100% - 24px);
+        font-size: 1vw; /* scales with parent width */
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+    }
+
+    .CameraButtonContainer {
+        display: none;
+        position: absolute;
+        z-index: 100;
+        top: 10px;
+        left: 10px;
+    }
+
+    .report-card-class iframe {
+        /* without this the mouse gets stuck when panning/zooming       */
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        pointer-events: none;
+    }
+</style>
+
+
+<template id="video-card-template">
+    <div class="CameraButtonContainer ">
+        <button class="panzoom-btn k-button" data-is-triggered="false">
+            <i class="fa fa-arrows-alt" aria-hidden="true"></i>
+        </button>
+        @*<button class="select_temp_button ZoomButton btn-camera-zoom" onclick=""><i class="fas fa-chevron-down fa-2x" style="display: inline-block;"></i><i class="fas fa-chevron-up fa-2x" style="display: none;"></i></button>
+            <button class="select_temp_button btn-camera-zoom-save" style="" onclick="handlerClickZoomSaveCameraBtn(event);"><i class="fas fa-save  fa-2x"></i></button>
+            <button class="select_temp_button btn-camera-zoom-reset" style="" onclick=""><i class="fas fa-redo  fa-2x"></i></button>*@
+    </div>
+    <h2 class="VideoText">Placeholder Name</h2>
+    <div class="video-card-class card-class" style="position: relative; width: 100%; height: 100%; padding: 10px;">
+
+        <div id="-frame" class="FrameContainer" data-TileId="">
+            <video autoplay muted class="camera-img video videoplayer" id="Camera_XXXXX" data-ifameid="Camera_XXXXXX" controls></video>
+        </div>
+
+
+    </div>
+</template>
+
+<template id="report-card-template">
+    <div class="CameraButtonContainer ">
+        <button class="panzoom-btn k-button" data-is-triggered="false">
+            <i class="fa fa-arrows-alt" aria-hidden="true"></i>
+        </button>
+        @*<button class="select_temp_button ZoomButton btn-camera-zoom" onclick=""><i class="fas fa-chevron-down fa-2x" style="display: inline-block;"></i><i class="fas fa-chevron-up fa-2x" style="display: none;"></i></button>
+            <button class="select_temp_button btn-camera-zoom-save" style="" onclick="handlerClickZoomSaveCameraBtn(event);"><i class="fas fa-save  fa-2x"></i></button>
+            <button class="select_temp_button btn-camera-zoom-reset" style="" onclick=""><i class="fas fa-redo  fa-2x"></i></button>*@
+    </div>
+    <div class="card-class report-card-class" style="position:relative; width:100%;height:100%;z-index:5;padding:10px;">
+        <div id="xxxx-frame" class="FrameContainer" style="" data-TileId="XXXXXXXX">
+            @*<iframe src="" frameborder="0" scrolling="no" data-ifameid="Camera_XXXX"></iframe>*@
+            <iframe class="camera-img" src="" frameborder="0" scrolling="no" data-ifameid="80" data-zoomx="null" data-zoomy="null" data-offsetx="null" data-offsety="null"></iframe>
+        </div>
+
+
+    </div>
+
+</template>
+
+
+@*======================================================================================================================*@
+
+@*============================= Libraries needed to create cards content ==============================*@
+
+<script src="/Scripts/hls.js"></script>
+<script src="/Scripts/panzoom.min.js" onerror="reloadCdn(this)"></script>
+
+
+<script type="module">
+    // this module is to use the CustomCanvas component
+
+    import CustomCanvas from '/Scripts/CustomCanvas.js'
+
+
+    // =================================== function that renders the card contents ============================== //
+    // depends only on HLS library
+    async function createCardContent(layoutCardDatasource) {
+        console.log("inside createCardContent");
+        if (layoutCardDatasource.componentType === "Report") {
+            const el = document.querySelector("#report-card-template").content.cloneNode(true);
+            // getting the url to the report
+            let res = await fetch(`/Canvas/GetReportURL?sourceId=${layoutCardDatasource.sourceId}`, {
+                method: "GET"
+            });
+
+            if (!res.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            let json = await res.json();
+
+
+            el.querySelector("iframe").src = json.url;
+            console.log("report url is" + json.url)
+
+
+            //add the panning and zoom
+            const dims = document.querySelector("#canvas-placeholder").getBoundingClientRect()
+            const x = layoutCardDatasource.offsetX * dims.width / 100;
+            const y = layoutCardDatasource.offsetY * dims.height / 100;
+            const scale = layoutCardDatasource.scale ? layoutCardDatasource.scale : 1;
+
+            // TODO have to convert the coordinate system to
+            el.querySelector(".card-class").style.transform = `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`;
+
+            el.querySelector(".card-class").style.transformOrigin = "0px 0px 0px"; //
+
+            // need to scale iframe to fit the parent
+            //gpt
+            const $iframe = $(el.querySelector("iframe"));
+            $iframe.on('load', function () {
+                try {
+                    var iframeDoc = this.contentDocument || this.contentWindow.document;
+                    var contentWidth = iframeDoc.documentElement.scrollWidth;
+                    var contentHeight = iframeDoc.documentElement.scrollHeight;
+
+                    var $parent = $iframe.parent();
+                    var parentWidth = $parent.width();
+                    var parentHeight = $parent.height();
+
+                    var scale = Math.min(
+                        parentWidth / contentWidth,
+                        parentHeight / contentHeight
+                    );
+
+                    $iframe.css({
+                        'width': contentWidth + 'px',
+                        'height': contentHeight + 'px',
+                        'transform': 'scale(' + scale + ')',
+                        'transform-origin': 'top left'
+                    });
+
+                    $parent.css('overflow', 'hidden');
+
+                } catch (e) {
+                    console.error('Error scaling iframe:', e);
+                }
+            });
+
+
+
+            return el;
+
+        } else if (layoutCardDatasource.componentType === "Camera") {
+            const el = document.querySelector("#video-card-template").content.cloneNode(true);
+            el.querySelector(".VideoText").innerHTML = layoutCardDatasource.cardName
+            console.log("rendering Card ", layoutCardDatasource.cardId)
+
+
+            //card.layoutCardDatasource.offsetX = (t.x - parentDim.left) / dims.width;
+            //card.layoutCardDatasource.offsetY = (t.y - parentDim.top) / dim.height;
+
+
+            //add the panning and zoom
+            const dims = document.querySelector("#canvas-placeholder").getBoundingClientRect()
+            const x = layoutCardDatasource.offsetX * dims.width / 100;
+            const y = layoutCardDatasource.offsetY * dims.height / 100;
+            const scale = layoutCardDatasource.scale ? layoutCardDatasource.scale : 1;
+
+            // TODO have to convert the coordinate system to
+            el.querySelector(".card-class").style.transform = `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`;
+
+            el.querySelector(".card-class").style.transformOrigin = "0px 0px 0px"; // this is important! not having it caused me misery
+
+
+            // setting up the hls
+
+            var hls = new Hls({
+                enableWorker: true,
+                liveBackBufferLength: 15,
+                backBufferLength: 15,
+                liveMaxBackBufferLength: 15,
+                maxBufferSize: 0,
+                maxBufferLength: 10,
+                liveSyncDurationCount: 1,
+            });
+            hls.loadSource("/Content/videos/" + layoutCardDatasource.sourceId + "/" + layoutCardDatasource.sourceId + ".m3u8?rd=" + Math.random());
+
+
+            const videoTag = el.querySelector("video");
+            hls.attachMedia(videoTag);
+            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+
+            });
+            hls.on(Hls.Events.ERROR, function (type, details) {
+                //console.log(type);
+                //console.log(details);
+                if (details.type == 'networkError' && details.details == 'levelLoadError' &&
+                    details.response.code == '0') {
+                    window.location.reload();
+                }
+
+            });
+
+            return el;
+        }
+        else {
+            return document.createElement("div");
+        }
+    }
+
+    // =================================== On editting activate panzoom ============================== //
+    // depends on panzoom library. Panzoom objects only use here
+
+    document.querySelector("#canvas-placeholder").addEventListener("EDIT_DATASOURCE", e => {
+        // show the panning buttons
+        console.log(e.detail);
+        console.log("showing the panning ");
+
+        $(".CameraButtonContainer").show();
+        //
+
+        // setting up the panzoom to the html element
+        document.querySelectorAll(".card-main-content").forEach(el => {
+            console.log("setting the pan zoom ")
+            let vidContainer = el.querySelector(".card-class");
+            let cardId = $(el).closest(".card-main").attr("id").split("_")[1];
+            let panzoonBtn = el.querySelector(".panzoom-btn");
+            if (vidContainer) {
+
+                // Read existing transform from the element
+                const matrix = new DOMMatrix(getComputedStyle(vidContainer).transform);
+
+                // Initialize with those values
+                const pz = panzoom(vidContainer);
+                pz.zoomTo(0, 0, matrix.a);
+                pz.moveTo(matrix.e, matrix.f); // pz resets the transform
+                //vidContainer.style.transform = `matrix(${matrix.a}, 0, 0, ${matrix.a}, ${matrix.e}, ${matrix.f})`;
+                //pz.zoom(matrix.a);
+
+
+
+
+                panzoonBtn.pz = pz;
+                pz.pause();
+                const canvasPlaceholder = document.querySelector("#canvas-placeholder");
+
+                pz.on('transform', (e) => {
+                    const t = pz.getTransform();
+                    console.log("For card " + cardId + "  x:", t.x, "y:", t.y, "scale:", t.scale);
+                    //console.log(vidContainer)
+                    let card = canvasPlaceholder.getCard(cardId);
+
+
+                    const dims = document.querySelector("#canvas-placeholder").getBoundingClientRect()
+
+                    const cardClass = document.querySelector("#Card_" + cardId + " .card-class");
+                    const matrix = new DOMMatrix(getComputedStyle(cardClass).transform);
+                    console.log(cardClass.style.transform)
+
+                    card.layoutCardDatasource.offsetX = (t.x) / dims.width * 100;
+                    card.layoutCardDatasource.offsetY = (t.y) / dims.height * 100;
+                    card.layoutCardDatasource.scale = t.scale;
+
+                });
+
+
+            }
+
+
+        });
+
+        //
+        // for toggling panzoom ability
+        $(".panzoom-btn").click((e) => {
+            const $btn = $(e.currentTarget);
+            const $card = $(e.currentTarget).closest(".card-main");
+            const cardId = $card.attr("id").split("_")[1];
+
+            console.log("panning clicked " + $card.attr("id"));
+
+            const isTriggered = $btn.attr("data-is-triggered") === "true";
+
+            $btn.attr("data-is-triggered", !isTriggered);
+
+            if (!isTriggered) {
+                console.log("activating panning for " + $card.attr("id"));
+                $btn.addClass("k-primary");
+                e.currentTarget.pz.resume();
+            } else {
+                console.log("deactivating panning for " + $card.attr("id"));
+                $btn.removeClass("k-primary");
+                e.currentTarget.pz.pause();
+            }
+
+        });
+        //----
+
+
+    });
+    //
+    document.querySelector("#canvas-placeholder").addEventListener("SAVE", hidePanZoomBtns);
+    document.querySelector("#canvas-placeholder").addEventListener("CANCEL", hidePanZoomBtns);
+
+    function hidePanZoomBtns() {
+        console.log("hiding the panzoom btns ")
+
+        $(".CameraButtonContainer").hide();
+    }
+
+
+    // ===================================  ============================== //
+
+
+
+    // =================================== Setting up the canvas ============================== //
+
+    async function setupCanvas() {
+
+        // getting canvas data ==============================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const layoutId = urlParams.get('Currentlayout');
+        console.log("loading canvas with layout id " + layoutId);
+        if (!layoutId) {
+            $("#page-loading").hide();
+            return;
+        }
+
+
+
+        let response = await fetch(`/canvas/GetLayoutTemplateInfo?layoutId=${layoutId}`, {
+            method: "GET"
+        });
+
+        if (!response.ok) {
+            console.log('Failed to get layout')
+            $("#failed-to-find").show();
+            return;
+        };
+
+        if (@ViewBag.canDelete ) {
+            $("#DeleteLayoutBtn").css("display", "block");
+        }
+
+        const metaData = await response.json();
+        const templateId = metaData.templateId;
+        const layoutname = metaData.layoutName;
+        console.log(metaData)
+        const combo = $("#LayoutNamesComboBox").data("kendoComboBox");
+        combo.one("dataBound", function () {
+            combo.value(layoutname); // sets the selected item
+        });
+        combo.dataSource.read();
+
+
+
+        response = await fetch(`/canvas/GetTemplateCards?templateId=${templateId}`, {
+            method: "GET"
+        });
+
+        const templateCards = await response.json();
+        console.log(templateCards);
+
+        response = await fetch(`/canvas/GetLayoutCardDatasources?layoutId=${layoutId}`, {
+            method: "GET"
+        });
+
+        const layoutCardDatasources = await response.json();
+        console.log(layoutCardDatasource)
+
+
+
+
+        // rendering the canvas ====================================
+
+        const canvas = new CustomCanvas("canvas-placeholder", templateId, layoutId, layoutname);
+
+        $("#canvas-name").text(layoutname);
+
+        canvas.createCardContent = createCardContent;
+        await canvas.loadData(templateCards, layoutCardDatasources) // if using a template
+        // canvas.loadData(templateCards, layoutCardData) // if using a template and layout
+
+        const params = new URLSearchParams(window.location.search);
+        const isFullscreen = params.get("isVideoWall") === "true";
+
+        const editTemplate = @ViewBag.editTemplate;
+        const editDatasource = @ViewBag.editDatasource;
+        console.log('setting access')
+        canvas.editPermissions(editTemplate, editDatasource);
+
+        if (isFullscreen) {
+            canvas.editPermissions(false, false);
+
+        }
+
+
+
+        // CRUD on single card --------------------------------
+        // save
+        canvas.createTemplateCard = async (card) => {
+            // returns the id the DB has generated
+
+            card.layoutCardDatasource.layoutId = card.layoutId;
+            card.layoutCardDatasource.cardId = null;
+            card.templateCard.cardId = null;
+            console.log({
+                templateCard: card.templateCard,
+                layoutCardDatasource: card.layoutCardDatasource,
+            });
+            const res = await fetch(`/canvas/CreateTemplateCard`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    templateCard: card.templateCard,
+                    layoutCardDatasource: card.layoutCardDatasource,
+                })
+            });
+
+            const json = await res.json();
+            const cardId = json.cardId;
+            const dataId = json.id;
+
+            console.log("generated Card id is " + cardId);
+            return json;
+        };
+
+        //delete
+        canvas.deleteTemplateCard = async (card) => {
+            card.layoutCardDatasource.layoutId = card.layoutId;
+            card.layoutCardDatasource.cardId = card.cardId;
+            const res = await fetch(`/canvas/DeleteTemplateCard`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    templateCard: card.templateCard,
+                    layoutCardDatasource: card.layoutCardDatasource,
+                })
+            });
+        };
+        // update
+        canvas.updateTemplateCard = async (card) => {
+
+            card.layoutCardDatasource.layoutId = card.layoutId;
+            card.layoutCardDatasource.cardId = card.cardId;
+            const res = await fetch(`/canvas/UpdateTemplateCard`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    templateCard: card.templateCard,
+                    layoutCardDatasource: card.layoutCardDatasource,
+                })
+            });
+        };
+
+        // ------------------------------------- //
+
+        // remove loading message
+
+        $("#page-loading").hide();
+
+    };
+    // ---------- //
+
+
+
+
+    // =================================== ============================== //
+
+
+    $(document).ready(async function () {
+        await setupCanvas();
+    });
+
+
+</script>

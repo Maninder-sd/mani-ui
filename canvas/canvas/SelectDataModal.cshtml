@@ -1,0 +1,628 @@
+﻿
+@{
+    ViewBag.Title = "NewLayout";
+
+}
+
+@*
+    this file is based on NewLayout.cshtml and reads data sources from Dashboard controller
+
+
+*@
+
+<script src="~/Scripts/Sortable.min.js" onerror="reloadCdn(this)"></script>
+<script src="~/Scripts/jquery-sortable.js" onerror="reloadCdn(this)"></script>
+
+<style>
+    ul.nav-tabs.new-layout {
+        border-bottom: 0px;
+    }
+
+
+
+    .nav-item.new-layout {
+        padding: 0px !important;
+    }
+
+
+
+    .nav.new-layout {
+        margin-bottom: 10px;
+    }
+
+    .nav-tabs .nav-link.new-layout {
+        color: gray;
+        border: 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .nav-tabs .nav-link.active.new-layout {
+        background: #e9e9e9;
+        border-bottom: 2px solid green;
+        margin-bottom: 0;
+    }
+
+    div > img {
+        width: auto;
+        height: auto;
+        max-height: 100%;
+        max-width: 100%;
+    }
+
+    iframe {
+        display: block;
+        width: 100%;
+        min-width: 11rem;
+        min-height: 108%;
+    }
+
+    .modal-xl {
+        /*max-width: 1100px;*/
+        max-width: 73rem;
+    }
+
+    .insert-component-btn, .close-modal-btn {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+
+    #listView > .k-listview-content {
+        overflow: unset !important;
+    }
+
+    p.card-title {
+        width: 9rem;
+        overflow: hidden;
+        display: inline-block;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+</style>
+
+
+<!--<h2>NewLayout</h2>
+<div id="demo">
+
+</div>-->
+<!-- Button trigger modal -->
+<!--<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter" style="margin: 2%;">
+    Add Items
+</button>
+
+<br />
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter" style="margin: 2%;">
+    Add Items
+</button>-->
+<!-- Modal -->
+<div class="modal fade bd-example-modal-lg" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Components</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            </div>
+            <div class="modal-body">
+
+                <div>
+                    <ul class="nav nav-tabs new-layout">
+                        <li class="nav-item new-layout">
+                            <a class="nav-link active new-layout" href="#camera-tab" data-toggle="tab">Cameras</a>
+                        </li>
+                        <li class="nav-item new-layout">
+                            <a class="nav-link new-layout" href="#report-tab" data-toggle="tab">Reports</a>
+                        </li>
+                        <li class="nav-item new-layout" style="visibility: hidden">
+                            <a class="nav-link new-layout" href="#image-tab" data-toggle="tab">Images</a>
+                        </li>
+                    </ul>
+                </div> <div class="tab-content">
+                    <div id="camera-tab" class="tab-pane active">
+                        @Html.Action("NewLayoutCameras", "Dashboard")
+                    </div>
+                    <div id="report-tab" class="tab-pane">
+                        @Html.Action("NewLayoutReport", "Dashboard")
+                    </div>
+                    <div id="image-tab" class="tab-pane" style="visibility: hidden">
+                        @*@Html.Action("NewLayoutImages", "Dashboard")*@
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary insert-component-btn" onclick="SelectContainerModal()">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    // needed to make dashboard code to work
+    function kendo_token_err_refresh(e) {
+        console.log(e);
+        window.location.reload();
+    }
+    //
+    var items = {};
+
+    var currentSelection;
+
+    function onChange(arg) {
+        console.log("selected a list item")
+
+        var ds = this.dataSource;
+        console.log(arg)
+        console.log(ds)
+
+
+
+        var selected = $.map(this.select(), function (item) {
+
+            /*console.log($(item));*/
+            /*($(item) == selected)*/
+
+            var crntindex = $(item).index();
+            var dataitem = ds.view()[crntindex];
+
+            // console.log($(item));
+
+            return dataitem;
+
+
+            //  $("#listView").data("kendoListView").clearSelection();
+
+
+
+        });
+
+        if (selected[0] != null) {
+            items.Type = selected[0].Type;
+            items.Id = selected[0].Id;
+
+        }
+
+
+        if (selected && selected.length) {
+            var item = selected[0];
+            console.log("the item selected is")
+            console.log(item)
+
+
+
+            // if user clicks same image clear the selection and reset currentSelection to empty
+            if (currentSelection == item) {
+                $("#listView").data("kendoListView").clearSelection();
+                $("#listView1").data("kendoListView").clearSelection();
+                //$("#listView2").data("kendoListView").clearSelection();
+                currentSelection = "";
+                items.Type = undefined;
+                items.Id = undefined;
+
+                // adding code to write to global var layoutCardDatasource
+                layoutCardDatasource.cardName = null;
+                layoutCardDatasource.componentType = null; // "Camera", "Report""
+                layoutCardDatasource.sourceId = null;
+
+
+            }
+            else {
+                currentSelection = item;
+                //console.log(currentSelection);
+
+                // adding code to write to global var layoutCardDatasource
+                // updating by reference
+                layoutCardDatasource.cardName = item.Name;
+                layoutCardDatasource.componentType = item.Type; // "Camera", "Report""
+                layoutCardDatasource.sourceId = item.Id;
+
+            }
+
+
+
+            //{
+            //    cardId: null,
+            //    layoutId: null,
+            //    cardName: null,
+            //    componentType: null,
+            //    source: null,
+            //    zoomX: null,
+            //    zoomY: null,
+            //    offsetX: null,
+            //    offsetY: null,
+            //};
+        }
+
+
+
+    }
+
+    $("#listView").kendoListView({
+        change: function (e) {
+            e.sender.clearSelection();
+        }
+    });
+
+    // var SelectedType = '';
+    $("a.nav-link.new-layout").on("shown.bs.tab", function (e) {
+        onDataBound();
+    });
+    $("#exampleModalCenter").on('shown.bs.modal', function (e) {
+        $("#listView_pager").removeClass("k-pager-sm");
+        $("#listView1_pager").removeClass("k-pager-sm");
+        $("#listView2_pager").removeClass("k-pager-sm");
+        onDataBound();
+    });
+    function onDataBound(arg) {
+        //console.log("ListView data bound");
+        //console.log("ID", GlobalContainerId);
+        if (GlobalContainerId != '') {
+            var innerText = document.getElementById(GlobalContainerId).innerHTML;
+            var bracketIndex = innerText.indexOf("{");
+            $("#listView").data("kendoListView").clearSelection();
+            $("#listView1").data("kendoListView").clearSelection();
+            $("#listView2").data("kendoListView").clearSelection();
+
+
+
+            // Get currently active tab
+            //console.log("active tab", $("a.nav-link.active.new-layout").attr("href"));
+            var activeTab;
+            if ($("a.nav-link.active.new-layout").attr("href") == "#camera-tab") {
+                activeTab = "Camera";
+            } else if ($("a.nav-link.active.new-layout").attr("href") == "#report-tab") {
+                activeTab = "Report";
+            } else {
+                activeTab = "StaticImage";
+            }
+
+        }
+    }
+
+
+    //Wait for an element before resolving a promise
+    //param {String} querySelector - Selector of element to wait for
+    //param {Integer} timeout - Milliseconds to wait before timing out, or 0 for no timeout
+
+    function waitForElement(querySelector, timeout) {
+        return new Promise((resolve, reject) => {
+            var timer = false;
+            console.log(document.querySelectorAll(querySelector));
+            console.log(document.querySelectorAll(querySelector).length == 10);
+            if (document.querySelectorAll(querySelector).length == 10) return resolve();
+            const observer = new MutationObserver(() => {
+                if (document.querySelectorAll(querySelector).length == 10) {
+                    observer.disconnect();
+                    if (timer !== false) clearTimeout(timer);
+                    return resolve();
+                }
+            });
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            if (timeout) timer = setTimeout(() => {
+                observer.disconnect();
+                reject();
+            }, timeout);
+        });
+    }
+
+    var GlobalContainerId = '';
+    function OpenSelectContainerModal() {
+        // if a prior datasource was selected goes to that page in the list
+
+
+        $('#exampleModalCenter').modal('show');
+
+        if (!layoutCardDatasource.sourceId) {
+            $("#listView").data("kendoListView").clearSelection();
+            $("#listView1").data("kendoListView").clearSelection();
+            //$("#listView2").data("kendoListView").clearSelection();
+            $(".nav-tabs.new-layout a[href='#camera-tab']").tab('show');
+
+            $('#listView').data().kendoListView.dataSource.page(1);
+
+            //$(".nav-tabs.new-layout a[href='#camera-tab']").tab('show');
+            return;
+        }
+
+        //temp
+        //$('#listView').data().kendoListView.dataSource.page(1);
+        //return;
+
+        console.log("opening to the right page")
+        console.log(layoutCardDatasource)
+        var existingType = layoutCardDatasource.componentType;
+        var existingId = layoutCardDatasource.sourceId;
+
+
+
+        var listview;
+        if (existingType == "Camera") {
+            $(".nav-tabs.new-layout a[href='#camera-tab']").tab('show');
+            listview = $("#listView").data("kendoListView");
+        } else if (existingType == "Report") {
+            $(".nav-tabs.new-layout a[href='#report-tab']").tab('show');
+            listview = $("#listView1").data("kendoListView");
+        } else {
+            $(".nav-tabs.new-layout a[href='#image-tab']").tab('show');
+            listview = $("#listView2").data("kendoListView");
+        }
+
+
+        var selectedItem = listview.dataSource.data().find(function (item) {
+            if (item.Id == existingId) {
+                console.log("found the item in list "+ existingId)
+            }
+            return item.Id == existingId;
+        });
+        var selectedItemIndex = listview.dataSource.data().indexOf(selectedItem) + 1; // Get index of selected item in datasource
+        var pageSize = listview.dataSource.pageSize(); // Get the size of each page in the kendo list View
+
+
+
+        // Go to specific page with the selected item on modal open
+        if ((selectedItemIndex % pageSize) == 0) {
+            listview.dataSource.page(selectedItemIndex / pageSize);
+        } else {
+            listview.dataSource.page((selectedItemIndex + pageSize - (selectedItemIndex % pageSize)) / pageSize);
+        }
+
+
+        $(".k-state-selected").removeClass("k-state-selected")
+        $("[data-uid=" + selectedItem.uid + "]").addClass("k-state-selected");
+
+
+
+        return;
+
+
+        //GlobalContainerId = ContainerId;
+
+
+        //var innerText = document.getElementById(GlobalContainerId).innerHTML;
+        //var bracketIndex = innerText.indexOf("{");
+        //$("#listView").data("kendoListView").clearSelection();
+        //$("#listView1").data("kendoListView").clearSelection();
+        //$("#listView2").data("kendoListView").clearSelection();
+        //if (bracketIndex != -1) {
+
+
+
+        //    var itemData = innerText.substring(bracketIndex + 1, innerText.length - 1);
+        //    // console.log(itemData.split(","));
+
+        //}
+    }
+
+    function AddTile(TileId) {
+        console.log("adding tile function")
+        return;
+        var TileZoomSettings = 'data-ZoomX = "null" data-ZoomY = "null" data-OffsetX= "null"  data-OffsetY= "null"';
+        //alert(GlobalContainerId);
+        var innerText = document.getElementById(GlobalContainerId).innerHTML;
+        var bracketIndex = innerText.indexOf("{");
+        var InformationButton = '<button class="select_temp_button btn-camera-info" data-tooltip="' + currentSelection.Name + '" data-tooltip-persistent><i class="fas fa-info-circle fa-2x"></i></button>'
+
+        if (bracketIndex != -1) {
+            var itemData = innerText.substring(bracketIndex + 1, innerText.length - 1);
+
+            var existingType = itemData.split(",")[0].substring(6);
+            var existingId = itemData.split(",")[1].substring(5);
+            //document.getElementById(GlobalContainerId).innerHTML = innerText.substring(0, bracketIndex) + "{Type: " + items.Type + ", Id: " + items.Id + "}";
+            //document.getElementById(GlobalContainerId).innerHTML += "<img src=\'../Images/Camera_" + items.Id +".jpg\' max-height:100%; max-width:100%; object-fit: contain;>";
+            var RemoveButton = '<button class="select_temp_button RemoveButton" onclick = "RemoveContent(\'' + GlobalContainerId + '\');"><i class="fas fa-times-circle fa-2x "></i></button>';
+            var ZoomButton = '<button class="select_temp_button ZoomButton btn-camera-zoom" onclick = "toggleCameraEditMode($(this).parent().parent().parent(),' + true + ');"><i class="fas fa-chevron-down fa-2x" style="display: inline-block;"></i><i class="fas fa-chevron-up fa-2x" style="display: none;"></i></button>';
+            var SaveZoomPanButton = '<button class="select_temp_button btn-camera-zoom-save" style="" onclick = "handlerClickZoomSaveCameraBtn(event);"' + '><i class="fas fa-save  fa-2x"></i></button>';
+            var ResetZoomPanButton = '<button class="select_temp_button btn-camera-zoom-reset" style="" onclick = "handlerClickZoomResetCameraBtn(event);"' + '><i class="fas fa-redo  fa-2x"></i></button>';
+            var ButtonContainer = '<div class=\'CameraButtonContainer\'> ' + RemoveButton + InformationButton + ZoomButton + ResetZoomPanButton + SaveZoomPanButton + '</div>';
+
+            document.getElementById(GlobalContainerId).innerHTML += "<div id =" + GlobalContainerId + '-frame' + " class='FrameContainer'  data-tileid= " + TileId + "><iframe class='camera-img' src=\'../Dashboard/CameraFeedDirectory?id=" + currentSelection.Id + "\' frameborder='0'  scrolling='no' data-ifameid='" + currentSelection.Id + "' " + TileZoomSettings + "></iframe></div>" + ButtonContainer;
+        }
+        else {
+            if (currentSelection.Type == "Report") {
+                //alert(currentSelection.Id);
+                //console.log(currentSelection.Type);
+                //document.getElementById(GlobalContainerId).innerHTML += "{Type: " + currentSelection.Type + ", Id: " + currentSelection.Id + "}";<div class='camera-img-container'>
+                //document.getElementById(GlobalContainerId).innerHTML += "<img src=\'../Images/Camera_" + currentSelection.Id +".jpg\' max-height:100%; max-width:100%; object-fit: contain;>";
+                document.getElementById(GlobalContainerId).innerHTML = '';
+                // $("iframe").contents().find("body").html('');
+                var InformationButton = '<button class="select_temp_button btn-camera-info" data-tooltip="' + currentSelection.Name + '" data-tooltip-persistent><i class="fas fa-info-circle fa-2x"></i></button>'
+
+                var RemoveButton = '<button class="select_temp_button RemoveButton" onclick = "RemoveContent(\'' + GlobalContainerId + '\');"><i class="fas fa-times-circle fa-2x "></i></button>';
+                var ZoomButton = '<button class="select_temp_button ZoomButton btn-camera-zoom" onclick = "toggleCameraEditMode($(this).parent().parent().parent(),' + true + ');"><i class="fas fa-chevron-down fa-2x" style="display: inline-block;"></i><i class="fas fa-chevron-up fa-2x" style="display: none;"></i></button>';
+                var SaveZoomPanButton = '<button class="select_temp_button btn-camera-zoom-save" style="" onclick = "handlerClickZoomSaveCameraBtn(event);"' + '><i class="fas fa-save  fa-2x"></i></button>';
+                var ResetZoomPanButton = '<button class="select_temp_button btn-camera-zoom-reset" style="" onclick = "handlerClickZoomResetCameraBtn(event);"' + '><i class="fas fa-redo  fa-2x"></i></button>';
+                var ButtonContainer = '<div class=\'CameraButtonContainer\'> ' + RemoveButton + InformationButton + ZoomButton + ResetZoomPanButton + SaveZoomPanButton + '</div>';
+
+                if (currentSelection.URL != null) {
+                    document.getElementById(GlobalContainerId).innerHTML += "<div id =" + GlobalContainerId + '-frame' + " class='FrameContainer' data-tileid= " + TileId + "><iframe class='camera-img' src=\'" + currentSelection.URL + "\' frameborder='0' scrolling='no'  data-ifameid=" + currentSelection.Id + " " + TileZoomSettings + "></iframe></div>" + ButtonContainer;
+                }
+                else {
+                    document.getElementById(GlobalContainerId).innerHTML += "<div id =" + GlobalContainerId + '-frame' + " class='FrameContainer' data-tileid= " + TileId + "><iframe class='camera-img' src=\'../Report/EmbedReport?id=" + currentSelection.Id + "\' frameborder='0' scrolling='no'  data-ifameid=" + currentSelection.Id + " " + TileZoomSettings + "></iframe></div>" + ButtonContainer;
+                }
+                //document.getElementById(GlobalContainerId).innerHTML += "<iframe class='camera-img' src=\'../Dashboard/CameraFeedDirectory?id=" + currentSelection.Id + "\' frameborder='0'  data-tileid= " + TileId + " scrolling='no' + TileZoomSettings + '></iframe><button class='box_add_button' onclick='editTiles(" + temp + ");'><span style='color: #FF0000; '><i class='fas fa - plus - circle fa - 2x '></i></span></button>";
+                //$("button").remove().attr(GlobalContainerId);
+                //alert(PlusId);
+            }
+            else if (currentSelection.Type == "Camera") {
+                document.getElementById(GlobalContainerId).innerHTML = '';
+                // $("iframe").contents().find("body").html('');
+                var InformationButton = '<button class="select_temp_button btn-camera-info" data-tooltip="' + currentSelection.Name + '" data-tooltip-persistent><i class="fas fa-info-circle fa-2x"></i></button>'
+
+                var RemoveButton = '<button class="select_temp_button RemoveButton" onclick = "RemoveContent(\'' + GlobalContainerId + '\');"><i class="fas fa-times-circle fa-2x "></i></button>';
+                var ZoomButton = '<button class="select_temp_button ZoomButton btn-camera-zoom" onclick = "toggleCameraEditMode($(this).parent().parent().parent(),' + true + ');"><i class="fas fa-chevron-down fa-2x" style="display: inline-block;"></i><i class="fas fa-chevron-up fa-2x" style="display: none;"></i></button>';
+                var SaveZoomPanButton = '<button class="select_temp_button btn-camera-zoom-save" style="" onclick = "handlerClickZoomSaveCameraBtn(event);"' + '><i class="fas fa-save  fa-2x"></i></button>';
+                var ResetZoomPanButton = '<button class="select_temp_button btn-camera-zoom-reset" style="" onclick = "handlerClickZoomResetCameraBtn(event);"' + '><i class="fas fa-redo  fa-2x"></i></button>';
+                var ButtonContainer = '<div class=\'CameraButtonContainer\'> ' + RemoveButton + InformationButton + ZoomButton + ResetZoomPanButton + SaveZoomPanButton + '</div>';
+
+                document.getElementById(GlobalContainerId).innerHTML += '<h2 class="VideoText">' + currentSelection.Name + '</h2><div id =' + GlobalContainerId + '-frame' + ' class="FrameContainer" data-TileId = "' + TileId + '"><video autoplay muted class="camera-img video videoplayer" id="Camera_' + TileId + '" data-ifameid="Camera_' + currentSelection.Id + '"' + TileZoomSettings + ' controls></video></div>' + ButtonContainer;
+
+                var hls = new Hls({
+                    liveSyncDurationCount: 15,
+                    backBufferLength: 0,
+                });
+                hls.loadSource("/Content/videos/" + currentSelection.Id + "/" + currentSelection.Id + ".m3u8?rd=" + Math.random());
+                //hls.loadSource('http://127.0.0.1:8000/Content/videos/typescript_ts_segments/playlist.m3u8?rd=' + Math.random()); // for testing
+                hls.attachMedia(document.getElementById("Camera_" + TileId));
+                hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+
+                });
+                hls.on(Hls.Events.ERROR, function (type, details) {
+                    if (details.type == 'networkError' && details.details == 'levelLoadError' &&
+                        details.response.code == '0') {
+                        window.location.reload();
+                    }
+
+                });
+
+                // code to show "Buffering" panel when video is down
+                let custom_system_time = -1;
+                let custom_is_waiting = false;
+                let cam_name = "Camera_" + TileId
+
+                let video = document.getElementById("Camera_" + TileId)
+
+                video.addEventListener("waiting", (event) => {
+                    console.log("in waiting new layout")
+                    if (!custom_is_waiting) { //not already waiting
+                        custom_system_time = Date.now(); // in milliseconds
+                        custom_is_waiting = true;
+                        console.log(cam_name + " is waiting for more data");
+                    }
+
+                });
+
+                video.addEventListener("canplay", (event) => {
+                    let _video = event.target
+                    custom_system_time = -1;
+                    custom_is_waiting = false;
+                    $('#' + cam_name)
+                        .parent()
+                        .siblings('.CameraButtonContainer')
+                        .removeClass("error")
+                    console.log(_video.id + " can start again");
+                });
+
+                hls.on(Hls.Events.LEVEL_UPDATED, (event, data) => {
+                    let _video = event.target
+                    if (custom_is_waiting && ((Date.now() - custom_system_time) / 1000 > 15)) {
+                        console.log(cam_name + " been waiting for too long :" + (Date.now() - custom_system_time) / 1000 + " sec")
+                        $('#' + cam_name)
+                            .parent()
+                            .siblings('.CameraButtonContainer')
+                            .addClass("error")
+
+                    } else if (custom_is_waiting) {
+                        console.log(cam_name + " is waiting for " + (Date.now() - custom_system_time) / 1000 + " sec")
+                    }
+                });
+
+
+                // -------------------------------
+
+
+
+            }
+            else if (currentSelection.Type == "StaticImage") {
+                document.getElementById(GlobalContainerId).innerHTML = '';
+                // $("iframe").contents().find("body").html('');
+                var InformationButton = '<button class="select_temp_button btn-camera-info" data-tooltip="' + currentSelection.Name + '" data-tooltip-persistent><i class="fas fa-info-circle fa-2x"></i></button>'
+
+                var RemoveButton = '<button class="select_temp_button RemoveButton" onclick = "RemoveContent(\'' + GlobalContainerId + '\');"><i class="fas fa-times-circle fa-2x "></i></button>';
+                var ZoomButton = '<button class="select_temp_button ZoomButton btn-camera-zoom" onclick = "toggleCameraEditMode($(this).parent().parent().parent(),' + true + ');"><i class="fas fa-chevron-down fa-2x" style="display: inline-block;"></i><i class="fas fa-chevron-up fa-2x" style="display: none;"></i></button>';
+                var SaveZoomPanButton = '<button class="select_temp_button btn-camera-zoom-save" style="" onclick = "handlerClickZoomSaveCameraBtn(event);"' + '><i class="fas fa-save  fa-2x"></i></button>';
+                var ResetZoomPanButton = '<button class="select_temp_button btn-camera-zoom-reset" style="" onclick = "handlerClickZoomResetCameraBtn(event);"' + '><i class="fas fa-redo  fa-2x"></i></button>';
+                var ButtonContainer = '<div class=\'CameraButtonContainer\'> ' + RemoveButton + InformationButton + ZoomButton + ResetZoomPanButton + SaveZoomPanButton + '</div>';
+
+
+                document.getElementById(GlobalContainerId).innerHTML += "<div id =" + GlobalContainerId + '-frame' + " class='FrameContainer'  data-tileid= " + TileId + "><iframe class='camera-img' src=\'../Dashboard/StaticImages?id=" + currentSelection.Id + "\' frameborder='0'  scrolling='no'  data-ifameid='" + "Camera_" + currentSelection.Id + "' " + TileZoomSettings + " ></iframe></div>" + ButtonContainer;
+            }
+        }
+        triggerPanzoomStretch(TileId);
+    }
+
+    function SelectContainerModal() {
+        //console.log(currentSelection);
+        console.log('items');
+
+        sendDatasourceToCanvas();
+        $('.product.k-state-selected').hide();
+        //$('.card.k-state-selected').hide();
+        $('#exampleModalCenter').modal('hide');
+        return; //temp
+
+
+
+        if (items.Type == undefined || items.Id == undefined) {
+            alert("Please select the components")
+        }
+        else {
+            document.getElementById(GlobalContainerId).innerHTML += '<img id="loader" style="position:absolute" src="https://cdn.fgfbrands.com/Images/FGF-Gif2.gif" />';
+
+            //alert(GlobalContainerId.split("-")[1]);
+            //console.log($('#' + 'TemplateId-' + GlobalContainerId.split("-")[1]).attr('data-templatenum') ?? "0");
+            var Position = GlobalContainerId.split("-")[2];
+            if (~Position.indexOf("B_")) {
+                var TemplatePosition = "0";
+            }
+            else {
+                var TemplatePosition = $('#' + 'TemplateId-' + GlobalContainerId.split("-")[1]).attr('data-templatenum');
+            }
+
+
+            console.log(JSON.stringify({
+                Position: Position,
+                TemplatePosition: TemplatePosition,
+                ComponentId: items.Id,
+                ComponentType: items.Type,
+                LayoutId: LayoutId,
+                TemplateId: parseInt(GlobalContainerId.split("-")[1])
+            }));
+            return;
+
+
+            LayoutId = $('#select-layout').val();
+            //$.ajax({
+            //    type: 'POST',
+            //    dataType: 'JSON',
+            //    contentType: 'application/json; charset=utf=8',
+            //    url: '/Tiles/AddNewLayout',
+            //    data: JSON.stringify({
+            //        Position: Position,
+            //        TemplatePosition: TemplatePosition,
+            //        ComponentId: items.Id,
+            //        ComponentType: items.Type,
+            //        LayoutId: LayoutId,
+            //        TemplateId: parseInt(GlobalContainerId.split("-")[1])
+            //    })
+            //}).done(r => {
+            //    var TileId = r;
+            //    // console.log(r);
+            //    AddTile(TileId);
+            //    $('#loader').remove();
+            //});
+
+
+
+
+            items.Type = undefined;
+            items.Id = undefined;
+            $('.product.k-state-selected').hide();
+            //$('.card.k-state-selected').hide();
+
+            $('#exampleModalCenter').modal('hide');
+
+        }
+
+    }
+
+    function editTiles(id) {
+
+        alert(id);
+    }
+</script>
+

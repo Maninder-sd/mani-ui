@@ -1,0 +1,484 @@
+﻿@*files contains pop modals, error messages *@
+
+
+@* Pop up for deleting *@
+@(Html.Kendo().Window()
+    .Name("DeleteConfirmWindow")
+    .Title("Confirm Delete")
+    .Modal(true)
+    .Width(400)
+    .Visible(false)
+    .Actions(actions => actions.Clear())
+    .Content(@<text>
+        <div style="padding: 20px; text-align: center;">
+            <p style="font-size: 16px; margin-bottom: 30px;">Are you sure you want to delete the Screen?</p>
+            <button id="confirm-delete" class="k-button k-button-solid-error" style="margin-right: 10px;">Delete</button>
+            <button id="cancel-delete" class="k-button k-button-solid-base">Cancel</button>
+        </div>
+    </text>)
+)
+
+<script>
+    function showDeleteConfirm() {
+        var window = $("#DeleteConfirmWindow").data("kendoWindow");
+        window.center().open();
+    }
+
+    $(document).ready(function() {
+        $("#confirm-delete").on("click", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const layoutId = urlParams.get('Currentlayout');
+            $.ajax({
+                url: '@Url.Action("DeleteLayout", "Canvas")',
+                type: 'POST',
+                data: {
+                    layoutId : layoutId
+                },
+                success: function() {
+                    $("#DeleteConfirmWindow").data("kendoWindow").close();
+                    // Refresh or redirect
+                    window.location.href = window.location.pathname;
+
+                }
+            });
+        });
+
+        $("#cancel-delete").on("click", function() {
+            $("#DeleteConfirmWindow").data("kendoWindow").close();
+        });
+    });
+</script>
+
+
+
+@*I have issues nesting kendo componeents so im using jquery instead*@
+@*creating a new layout *@
+
+<div id="newLayoutWindow">
+    <div class="createLayoutModal">
+        @(Html.Kendo().Wizard()
+                .Name("layoutWizard")
+                .Events(e => e.Done("onWizardDone"))
+                .Steps(s =>
+                {
+                    s.Add().Content(@"
+                    <p style=""text-align: center;"">
+                    You can create a fresh template or use an existing template to make your Screen:
+                    </p>
+
+<div class=""d-flex flex-column align-items-center"" style=""width:100%;row-gap:20px;"">
+
+    <button id=""newTemplateBtn"" style=""width:200px;"" class=""k-button k-button-solid-primary"">
+        New Template
+    </button>
+
+    <button id=""existingTemplateBtn"" style=""width:200px;""  class=""k-button k-button-solid-base"">
+        Use Existing Template
+    </button>
+
+</div>
+
+
+
+                    ")
+                    .Buttons(b =>
+                    {
+                        b.Next();
+                    });
+
+
+                    // using bootstrap form here because i'm facing nexted kendo ui issues
+
+                    s.Add().Content(@"
+                    <div id=""new-template-options"" >
+
+                        <form>
+                          <div class=""mb-3"">
+                            <label for=""templateName"" class=""form-label"">Template Name</label>
+                            <input type=""text"" class=""form-control"" id=""newTemplateName"" name=""templateName"" placeholder=""Enter template name"" style=""width:80%"">
+                          </div>
+
+                          <div class=""mb-3"">
+                            <label for=""layoutName"" class=""form-label"">Screen Name</label>
+                            <input type=""text"" class=""form-control"" id=""newLayoutName"" name=""layoutName"" placeholder=""Enter Screen name"" style=""width:80%"">
+                          </div>
+
+                           <div id=""old-template-options"">
+                                <label for=""layoutName"" class=""form-label"">Select a Screen to clone</label>
+                                <input class=""form-control"" id=""layoutCloneList"" />
+                            </div>
+
+
+                          <div style=""width:100%;height:3px;background-color:black;margin-top:20px;""> </div>
+
+
+
+                        </form>
+
+
+
+                    </div>
+
+
+
+
+
+       ")
+       .Buttons(b =>{
+                    b.Previous();
+                    b.Done();
+                });
+        // -------
+
+
+                })
+            )
+    </div>
+</div>
+
+
+
+<script>
+
+    //global var
+    var makeNewTemplate = true;
+
+
+
+    // Setup the creating new layout modal ------------------------------------------
+    async function onWizardDone(e) {
+        console.log("Wizard completed");
+        var cloneLayoutId = null;
+        if (!makeNewTemplate) {
+            cloneLayoutId = $("#layoutCloneList").data("kendoComboBox").dataItem().Id;
+
+            console.log("Cloning the template for id " + cloneLayoutId);
+        }
+
+
+        console.log("making new template")
+        // make fetch rquest to create and get returned id
+
+        const templateName = $("#newTemplateName").val();
+        const layoutName = $("#newLayoutName").val();
+
+        const response = await fetch("/canvas/CreateNewTemplate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                templateName: templateName,
+                layoutName: layoutName,
+                cloneLayoutId: cloneLayoutId
+            })
+        });
+
+        const data = await response.json();
+        const id = data.id;
+
+            console.log("Returned ID:", id);
+            window.location.search = `?Currentlayout=${id}`
+
+
+    }
+
+    //
+    function setupLayoutModal() {
+
+        $("#old-template-options").hide();
+        $("#new-template-options").show();
+
+        $("#newLayoutWindow").kendoWindow({
+            title: "Create a new Screen",
+            modal: true,
+            visible: false,
+            draggable: false,
+            width: 500
+        });
+
+        $("#newTemplateBtn").click(() => {
+            console.log("new template")
+            $("#layoutWizard").data("kendoWizard").select(1);
+            $("#old-template-options").hide();
+            $("#new-template-options").show();
+            makeNewTemplate = true;
+
+
+        });
+
+        $("#existingTemplateBtn").click(() => {
+            console.log("existing tempalte");
+            $("#layoutWizard").data("kendoWizard").select(1);
+            $("#old-template-options").show();
+            $("#new-template-options").show();
+            makeNewTemplate = false;
+
+        });
+
+
+    }
+    //
+
+
+    $(document).ready(async function () {
+        setupLayoutModal();
+
+        $("#layoutCloneList").kendoComboBox({
+            dataTextField: "Name",
+            dataValueField: "Id",
+            placeholder: "Search for Screen",
+            filter: "contains",
+            suggest: true,
+            template: "#= Name # : #= Id #",
+            footerTemplate: "Total <strong>#: instance.dataSource.total() #</strong> items found",
+            minLength: 0,
+            height: 520,
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Canvas/GetLayoutNames",
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+
+    });
+
+</script>
+
+
+
+
+<div id="page-loading" style="
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.5);
+  z-index:500;
+">
+    <div style="
+    padding:20px 40px;
+    color:#fff;
+    font-size:20px;
+    border-radius:8px;
+  ">
+        <div class="spinner-border text-primary" style="width:70px;height:70px;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+</div>
+
+
+
+@*======================================= Experimental AI ==============================================*@
+@* Pop up for deleting *@
+@(Html.Kendo().Window()
+    .Name("GenerateFromPrompt")
+    .Title("Generate from prompt")
+    .Modal(true)
+    .Width(400)
+    .Visible(false)
+    .Actions(actions => actions.Close())
+    .Content(@<text>
+        <div style="padding: 20px; text-align: center;">
+              <div class="form-group">
+                <label for="prompt-area">Describe the template you want to build:</label>
+                <textarea class="form-control" id="prompt-area" rows="3"></textarea>
+              </div>
+
+            <button id="generate-btn" class="k-button k-button-solid-error" style="margin-right: 10px;">Generate</button>
+        </div>
+    </text>)
+)
+@*==*@
+<script>
+    const promptPrefix = `
+I want you to return a JSON with the format I described below using typescript. Only return a JSON, do not return any other text
+
+    type CardData = {
+  message: string
+  cards: {
+    x_left: number
+    x_right: number
+    y_top: number
+    y_bottom: number
+  }[]
+}
+
+    The array Cards will have the coordinated of the cards to be places on a 100x100 canvas. Here are some rules:
+    1) Make sure the coordinates are integers from 0 to 100
+    2) make sure none of the cards overlap. More specifically, no two cards overlap on the x coordinates and y coordinates. Overlap can only happen on the x coordinate only or on the y coordinate only
+    3) The message key should be a short one sentence light hearted motivational comment.
+    4) The number of cards is given in the description below
+    5) The layout of the card is described in the text below. Do your very best to accomodate the layout request. You are not allowed to break the rules 1, 2, 3, 4
+
+
+    When creating the card positions, follow a clear method for checking overlap and arranging the cards based on what the user wants.
+
+How to Check for Overlap
+Each card has four numbers:
+
+x_left
+
+x_right
+
+y_top
+
+y_bottom
+
+To check overlap between two cards:
+
+They overlap on the x‑axis if
+A.x_left < B.x_right and A.x_right > B.x_left
+
+They overlap on the y‑axis if
+A.y_top < B.y_bottom and A.y_bottom > B.y_top
+
+A placement is not allowed if both x‑overlap and y‑overlap happen at the same time.
+
+A placement is allowed if:
+
+They overlap only on x, or
+
+They overlap only on y, or
+
+They don’t overlap at all.
+
+Always compare every new card with all previously placed cards before finalizing its position.
+
+How to Choose the Best Layout
+The user will describe how they want the cards arranged (for example: in a grid, in a row, stacked vertically, centered, spread out, etc.). You must:
+
+Follow the layout request as closely as possible.
+
+Place cards in positions that visually match the description.
+
+If the layout conflicts with the rules, you must still follow rules 1–4 and adjust the layout while keeping the general idea.
+
+Use the 100×100 space in a smart and balanced way.
+
+Keep spacing even when it makes sense.
+
+Use simple, clean coordinates when possible.
+
+If the user mentions symmetry, alignment, or spacing, include those ideas while still avoiding illegal overlap.
+
+General Placement Strategy
+Start by deciding roughly where each card should go based on the layout request.
+
+Make sure each card fits inside the 100×100 area.
+
+If two cards overlap in a way that breaks the rules, move one of them slightly while keeping the layout pattern.
+
+Keep all coordinates as whole numbers between 0 and 100.
+
+
+
+   
+    This is my prompt :
+    `;
+
+
+    function showAiPopup() {
+        let window = $("#GenerateFromPrompt").data("kendoWindow");
+        window.center().open();
+    }
+
+    function isExpectedFormat (data) {
+
+        /*
+
+          type CardData = {
+              message: string
+              cards: {
+                x_left: number
+                x_right: number
+                y_top: number
+                y_bottom: number
+              }[]
+            }
+
+        */
+
+
+        if (typeof data !== "object" || data === null) return false;
+
+        if (typeof data.message !== "string") return false;
+
+        if (!Array.isArray(data.cards)) return false;
+
+        for (const card of data.cards) {
+            if (typeof card !== "object" || card === null) return false;
+
+            const keys = ["x_left", "x_right", "y_top", "y_bottom"];
+
+            for (const k of keys) {
+                if (typeof card[k] !== "number") return false;
+                if (!Number.isInteger(card[k])) return false;
+                if (card[k] < 0 || card[k] > 100) return false;
+            }
+        }
+
+        return true;
+    }
+
+
+
+
+    $(document).ready(function() {
+        $("#generate-btn").on("click", function () {
+            console.log("geenrating the layout")
+            let finalPrompt = document.querySelector("#prompt-area").value
+            finalPrompt = promptPrefix + finalPrompt;
+            console.log(finalPrompt);
+
+
+            // send this to claude and get response
+            fetch('/Canvas/QueryLLM', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: finalPrompt
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Raw response:", data);
+                    let parsedData = JSON.parse(data);
+
+                    if (isExpectedFormat(parsedData)) {
+                        console.log("Valid CardData:", parsedData);
+                        document.querySelector("#canvas-placeholder").CreateTemplateFromData(parsedData.cards);
+                        let window = $("#GenerateFromPrompt").data("kendoWindow");
+                        window.center().close();
+                    } else {
+                        console.error("Invalid CardData format");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+
+        });
+
+
+
+        // ----------
+    });
+    // -----------
+
+
+
+
+</script>

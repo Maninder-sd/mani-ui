@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+</head>
+<style>
+    body {
+        background-color: darkslategrey !important;
+    }
+
+    .toolbar {
+        display: flex;
+        flex-direction: row;
+        background-color: #7AC143;
+        border-radius: 20px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        transition: box-shadow 0.3s;
+        padding: 10px;
+        column-gap: 20px;
+        margin: 0 20px 0 20px;
+        padding-left: 40px;
+        margin-bottom: 10px;
+    }
+
+    .toolbar:hover {
+        box-shadow: 0 0 10px black;
+    }
+
+    #canvas-placeholder {
+        width: 100%;
+        height: 100%;
+    }
+
+    #canvas-name-container {
+        background: ;
+        border-radius: 12px 12px 0 0;
+        border: 2px solid #e94560;
+        border-bottom: none;
+        margin-top: 10px;
+        padding: 5px 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        position: relative;
+        margin-left: 20px;
+        width: calc(100vw - 40px);
+    }
+
+
+    #canvas-name {
+        width: fit-content;
+        margin: 0;
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 500;
+        letter-spacing: 2px;
+        font-family: 'Trebuchet MS', 'Lucida Sans', Arial, sans-serif;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 1;
+    }
+
+    #explaination {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    #explaination i {
+        transition: box-shadow 0.3s;
+        border-radius: 10px;
+    }
+
+    #explaination i:hover {
+        box-shadow: 0 0 10px black;
+    }
+</style>
+
+
+<body style="padding:0;margin:0;height:100vh; display: flex; flex-direction:column;">
+
+
+    <div class="toolbar">
+
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Dropdown button
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Action</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+        </div>
+
+
+        <div class="vert-divider" style="width:3px;height:inherit; background-color:black;"></div>
+
+        <div id="explaination" style="">
+            <i class="fa-solid fa-circle-info" style="font-size: large; height: fit-content"></i>
+        </div>
+    </div>
+
+    <!-- failure screen -->
+    <div id="failed-to-find" style="
+        padding: 16px 24px;
+        background-color: #ffe5e5;
+        border: 1px solid #ffb3b3;
+        color: #a30000;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display:none;
+    ">
+        Failed to find the layout
+    </div>
+
+
+    <div style="width: 100vw; flex:1; padding: 0 20px 0 20px; ">
+        <div class="" id="canvas-placeholder"></div>
+    </div>
+
+
+
+</body>
+
+<script type="module">
+
+    import CustomCanvas from '/canvas/CustomCanvas.js'
+
+
+    // =================================== Setting up the canvas ============================== //
+
+    // async function setupCanvas() {
+
+    //     // getting canvas data ==============================================
+    //     const urlParams = new URLSearchParams(window.location.search);
+    //     const layoutId = urlParams.get('Currentlayout');
+    //     console.log("loading canvas with layout id " + layoutId);
+    //     if (!layoutId) {
+    //         $("#page-loading").hide();
+    //         return;
+    //     }
+
+
+
+    //     let response = await fetch(`/canvas/GetLayoutTemplateInfo?layoutId=${layoutId}`, {
+    //         method: "GET"
+    //     });
+
+    //     if (!response.ok) {
+    //         console.log('Failed to get layout')
+    //         $("#failed-to-find").show();
+    //         return;
+    //     };
+
+    //     if (@ViewBag.canDelete) {
+    //         $("#DeleteLayoutBtn").css("display", "block");
+    //     }
+
+    //     const metaData = await response.json();
+    //     const templateId = metaData.templateId;
+    //     const layoutname = metaData.layoutName;
+    //     console.log(metaData)
+    //     const combo = $("#LayoutNamesComboBox").data("kendoComboBox");
+    //     combo.one("dataBound", function () {
+    //         combo.value(layoutname); // sets the selected item
+    //     });
+    //     combo.dataSource.read();
+
+
+
+    //     response = await fetch(`/canvas/GetTemplateCards?templateId=${templateId}`, {
+    //         method: "GET"
+    //     });
+
+    //     const templateCards = await response.json();
+    //     console.log(templateCards);
+
+    //     response = await fetch(`/canvas/GetLayoutCardDatasources?layoutId=${layoutId}`, {
+    //         method: "GET"
+    //     });
+
+    //     const layoutCardDatasources = await response.json();
+    //     console.log(layoutCardDatasource)
+
+
+
+
+    //     // rendering the canvas ====================================
+
+    //     const canvas = new CustomCanvas("canvas-placeholder", templateId, layoutId, layoutname);
+
+    //     $("#canvas-name").text(layoutname);
+
+    //     canvas.createCardContent = createCardContent;
+    //     await canvas.loadData(templateCards, layoutCardDatasources) // if using a template
+    //     // canvas.loadData(templateCards, layoutCardData) // if using a template and layout
+
+    //     const params = new URLSearchParams(window.location.search);
+    //     const isFullscreen = params.get("isVideoWall") === "true";
+
+    //     const editTemplate = @ViewBag.editTemplate;
+    //     const editDatasource = @ViewBag.editDatasource;
+    //     console.log('setting access')
+    //     canvas.editPermissions(editTemplate, editDatasource);
+
+    //     if (isFullscreen) {
+    //         canvas.editPermissions(false, false);
+
+    //     }
+
+
+
+    //     // CRUD on single card --------------------------------
+    //     // save
+    //     canvas.createTemplateCard = async (card) => {
+    //         // returns the id the DB has generated
+
+    //         card.layoutCardDatasource.layoutId = card.layoutId;
+    //         card.layoutCardDatasource.cardId = null;
+    //         card.templateCard.cardId = null;
+    //         console.log({
+    //             templateCard: card.templateCard,
+    //             layoutCardDatasource: card.layoutCardDatasource,
+    //         });
+    //         const res = await fetch(`/canvas/CreateTemplateCard`, {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json"
+    //             },
+    //             body: JSON.stringify({
+    //                 templateCard: card.templateCard,
+    //                 layoutCardDatasource: card.layoutCardDatasource,
+    //             })
+    //         });
+
+    //         const json = await res.json();
+    //         const cardId = json.cardId;
+    //         const dataId = json.id;
+
+    //         console.log("generated Card id is " + cardId);
+    //         return json;
+    //     };
+
+    //     //delete
+    //     canvas.deleteTemplateCard = async (card) => {
+    //         card.layoutCardDatasource.layoutId = card.layoutId;
+    //         card.layoutCardDatasource.cardId = card.cardId;
+    //         const res = await fetch(`/canvas/DeleteTemplateCard`, {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json"
+    //             },
+    //             body: JSON.stringify({
+    //                 templateCard: card.templateCard,
+    //                 layoutCardDatasource: card.layoutCardDatasource,
+    //             })
+    //         });
+    //     };
+    //     // update
+    //     canvas.updateTemplateCard = async (card) => {
+
+    //         card.layoutCardDatasource.layoutId = card.layoutId;
+    //         card.layoutCardDatasource.cardId = card.cardId;
+    //         const res = await fetch(`/canvas/UpdateTemplateCard`, {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json"
+    //             },
+    //             body: JSON.stringify({
+    //                 templateCard: card.templateCard,
+    //                 layoutCardDatasource: card.layoutCardDatasource,
+    //             })
+    //         });
+    //     };
+
+    //     // ------------------------------------- //
+
+    //     // remove loading message
+
+    //     $("#page-loading").hide();
+
+    // };
+    // ---------- //
+
+
+
+    async function setupCanvas() {
+
+        const templateId = 123;
+        const layoutId = 123;
+        const layoutname = "123";
+
+        const canvas = new CustomCanvas("canvas-placeholder", templateId, layoutId, layoutname);
+
+        // $("#canvas-name").text(layoutname);
+
+        // canvas.createCardContent = createCardContent;
+        // await canvas.loadData(templateCards, layoutCardDatasources) // if using a template
+        // canvas.loadData(templateCards, layoutCardData) // if using a template and layout
+
+        const params = new URLSearchParams(window.location.search);
+        const isFullscreen = params.get("isVideoWall") === "true";
+
+
+
+        canvas.editPermissions(true, true);
+
+
+    }
+
+    // =================================== ============================== //
+
+
+    $(document).ready(async function () {
+        await setupCanvas();
+    });
+
+
+</script>
+
+</html>
