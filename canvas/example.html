@@ -35,6 +35,7 @@
     .toolbar {
         display: flex;
         flex-direction: row;
+        align-items: center;
         background-color: #7AC143;
         border-radius: 20px;
         border-top-left-radius: 0;
@@ -100,6 +101,18 @@
     #explaination i:hover {
         box-shadow: 0 0 10px black;
     }
+
+    #canvas-selection {
+        text-align: center;
+        height: fit-content;
+        color: darkgreen;
+        font-size: large;
+        font-weight: 600;
+        background-color: #f6eee3;
+        padding: 3px 30px;
+        border-radius: 10px;
+        /* margin: 0 30px; */
+    }
 </style>
 
 
@@ -111,19 +124,23 @@
         <div class="dropdown">
             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
                 aria-expanded="false">
-                Dropdown button
+                Select a canvas
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                <li><a class="dropdown-item" href="?id=1">Canvas 1</a></li>
+                <li><a class="dropdown-item" href="?id=2">Canvas 2</a></li>
+                <li><a class="dropdown-item" href="?id=3">Canvas 3</a></li>
             </ul>
         </div>
 
+        <button id="clear-local-data" type="button" class="btn btn-danger">Clear local data</button>
 
-        <div class="vert-divider" style="width:3px;height:inherit; background-color:black;"></div>
 
-        <div id="explaination" style="">
+        <div class="vert-divider" style="width:3px;height:30px; background-color:black;"></div>
+
+        <div id="canvas-selection"> No Canvas selected</div>
+
+        <div id="explaination" style="display:none;">
             <i class="fa-solid fa-circle-info" style="font-size: large; height: fit-content"></i>
         </div>
     </div>
@@ -154,165 +171,31 @@
 
 <script type="module">
 
+    // =============================== setting up local storage ================================== //
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedId = urlParams.get('id');
+    if (selectedId) {
+        $("#canvas-selection").text("Canvas " + selectedId + " selected")
+    }
+
+    $("#clear-local-data").click(() => {
+        localStorage.clear();
+        location.reload();
+    })
+
+    if (!localStorage.getItem("example")) {
+        localStorage.setItem("example", JSON.stringify({
+            "canvas 1": [],
+            "canvas 2": [],
+            "canvas 3": [],
+
+        }));
+    }
+
+
+
     import CustomCanvas from '/canvas/CustomCanvas.js'
-
-
-    // =================================== Setting up the canvas ============================== //
-
-    // async function setupCanvas() {
-
-    //     // getting canvas data ==============================================
-    //     const urlParams = new URLSearchParams(window.location.search);
-    //     const layoutId = urlParams.get('Currentlayout');
-    //     console.log("loading canvas with layout id " + layoutId);
-    //     if (!layoutId) {
-    //         $("#page-loading").hide();
-    //         return;
-    //     }
-
-
-
-    //     let response = await fetch(`/canvas/GetLayoutTemplateInfo?layoutId=${layoutId}`, {
-    //         method: "GET"
-    //     });
-
-    //     if (!response.ok) {
-    //         console.log('Failed to get layout')
-    //         $("#failed-to-find").show();
-    //         return;
-    //     };
-
-    //     if (@ViewBag.canDelete) {
-    //         $("#DeleteLayoutBtn").css("display", "block");
-    //     }
-
-    //     const metaData = await response.json();
-    //     const templateId = metaData.templateId;
-    //     const layoutname = metaData.layoutName;
-    //     console.log(metaData)
-    //     const combo = $("#LayoutNamesComboBox").data("kendoComboBox");
-    //     combo.one("dataBound", function () {
-    //         combo.value(layoutname); // sets the selected item
-    //     });
-    //     combo.dataSource.read();
-
-
-
-    //     response = await fetch(`/canvas/GetTemplateCards?templateId=${templateId}`, {
-    //         method: "GET"
-    //     });
-
-    //     const templateCards = await response.json();
-    //     console.log(templateCards);
-
-    //     response = await fetch(`/canvas/GetLayoutCardDatasources?layoutId=${layoutId}`, {
-    //         method: "GET"
-    //     });
-
-    //     const layoutCardDatasources = await response.json();
-    //     console.log(layoutCardDatasource)
-
-
-
-
-    //     // rendering the canvas ====================================
-
-    //     const canvas = new CustomCanvas("canvas-placeholder", templateId, layoutId, layoutname);
-
-    //     $("#canvas-name").text(layoutname);
-
-    //     canvas.createCardContent = createCardContent;
-    //     await canvas.loadData(templateCards, layoutCardDatasources) // if using a template
-    //     // canvas.loadData(templateCards, layoutCardData) // if using a template and layout
-
-    //     const params = new URLSearchParams(window.location.search);
-    //     const isFullscreen = params.get("isVideoWall") === "true";
-
-    //     const editTemplate = @ViewBag.editTemplate;
-    //     const editDatasource = @ViewBag.editDatasource;
-    //     console.log('setting access')
-    //     canvas.editPermissions(editTemplate, editDatasource);
-
-    //     if (isFullscreen) {
-    //         canvas.editPermissions(false, false);
-
-    //     }
-
-
-
-    //     // CRUD on single card --------------------------------
-    //     // save
-    //     canvas.createTemplateCard = async (card) => {
-    //         // returns the id the DB has generated
-
-    //         card.layoutCardDatasource.layoutId = card.layoutId;
-    //         card.layoutCardDatasource.cardId = null;
-    //         card.templateCard.cardId = null;
-    //         console.log({
-    //             templateCard: card.templateCard,
-    //             layoutCardDatasource: card.layoutCardDatasource,
-    //         });
-    //         const res = await fetch(`/canvas/CreateTemplateCard`, {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json"
-    //             },
-    //             body: JSON.stringify({
-    //                 templateCard: card.templateCard,
-    //                 layoutCardDatasource: card.layoutCardDatasource,
-    //             })
-    //         });
-
-    //         const json = await res.json();
-    //         const cardId = json.cardId;
-    //         const dataId = json.id;
-
-    //         console.log("generated Card id is " + cardId);
-    //         return json;
-    //     };
-
-    //     //delete
-    //     canvas.deleteTemplateCard = async (card) => {
-    //         card.layoutCardDatasource.layoutId = card.layoutId;
-    //         card.layoutCardDatasource.cardId = card.cardId;
-    //         const res = await fetch(`/canvas/DeleteTemplateCard`, {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json"
-    //             },
-    //             body: JSON.stringify({
-    //                 templateCard: card.templateCard,
-    //                 layoutCardDatasource: card.layoutCardDatasource,
-    //             })
-    //         });
-    //     };
-    //     // update
-    //     canvas.updateTemplateCard = async (card) => {
-
-    //         card.layoutCardDatasource.layoutId = card.layoutId;
-    //         card.layoutCardDatasource.cardId = card.cardId;
-    //         const res = await fetch(`/canvas/UpdateTemplateCard`, {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json"
-    //             },
-    //             body: JSON.stringify({
-    //                 templateCard: card.templateCard,
-    //                 layoutCardDatasource: card.layoutCardDatasource,
-    //             })
-    //         });
-    //     };
-
-    //     // ------------------------------------- //
-
-    //     // remove loading message
-
-    //     $("#page-loading").hide();
-
-    // };
-    // ---------- //
-
-
 
     async function setupCanvas() {
 
@@ -324,16 +207,55 @@
 
         // $("#canvas-name").text(layoutname);
 
-        // canvas.createCardContent = createCardContent;
-        // await canvas.loadData(templateCards, layoutCardDatasources) // if using a template
-        // canvas.loadData(templateCards, layoutCardData) // if using a template and layout
+        let localData = JSON.parse(localStorage.getItem("example"))
+        console.log(localData);
+        let templateCards = localData["canvas " + selectedId]
+        await canvas.loadData(templateCards) // if using a template
 
         const params = new URLSearchParams(window.location.search);
         const isFullscreen = params.get("isVideoWall") === "true";
-
-
-
         canvas.editPermissions(true, true);
+
+        canvas.createTemplateCard = async (card) => {
+
+            let localData = JSON.parse(localStorage.getItem("example"))
+            console.log(localData);
+            let templateCards = localData["canvas " + selectedId]
+            templateCards.push(card.templateCard)
+
+            localStorage.setItem("example", JSON.stringify(localData))
+            return { cardId: card.cardId, id: card.cardId };
+        };
+        // =========
+        canvas.deleteTemplateCard = async (card) => {
+
+            let localData = JSON.parse(localStorage.getItem("example"))
+            console.log(localData);
+            let templateCards = localData["canvas " + selectedId]
+            let toDelete = templateCards.find((x) => { return x.cardId == card.cardId });
+            let index = templateCards.indexOf(toDelete);
+            templateCards.splice(index, 1)
+
+            localStorage.setItem("example", JSON.stringify(localData))
+            return { cardId: card.cardId, id: card.cardId };
+        };
+        // =========
+
+        // =========
+        canvas.updateTemplateCard = async (card) => {
+
+            let localData = JSON.parse(localStorage.getItem("example"))
+            console.log(localData);
+            let templateCards = localData["canvas " + selectedId]
+            let toDelete = templateCards.find((x) => { return x.cardId == card.cardId });
+            let index = templateCards.indexOf(toDelete);
+            templateCards.splice(index, 1)
+            templateCards.push(card.templateCard)
+
+            localStorage.setItem("example", JSON.stringify(localData))
+            return { cardId: card.cardId, id: card.cardId };
+        };
+        // =========
 
 
     }
