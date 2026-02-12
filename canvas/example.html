@@ -195,13 +195,18 @@
 
 
 
-    import CustomCanvas from '/canvas/CustomCanvas.js'
+    import CustomCanvas from 'mani-ui/canvas/CustomCanvas.js'
 
     async function setupCanvas() {
 
         const templateId = 123;
         const layoutId = 123;
         const layoutname = "123";
+        if (!selectedId) {
+            console.log("nothing selected")
+            return;
+        }
+
 
         const canvas = new CustomCanvas("canvas-placeholder", templateId, layoutId, layoutname);
 
@@ -209,6 +214,7 @@
 
         let localData = JSON.parse(localStorage.getItem("example"))
         console.log(localData);
+
         let templateCards = localData["canvas " + selectedId]
         await canvas.loadData(templateCards) // if using a template
 

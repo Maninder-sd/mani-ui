@@ -16,7 +16,7 @@ const UNIT = 2; // 2% of canvas, controls how fine the layout can be
 // this makes writing the html template easier 
 //const res = await fetch('/html/CustomCanvas.html');
 const base = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const res = await fetch(`${base}/canvas/CustomCanvas.html`);
+const res = await fetch(`${base}/mani-ui/canvas/CustomCanvas.html`);
 
 const htmlString = await res.text();
 const parser = new DOMParser();
