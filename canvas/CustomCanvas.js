@@ -571,6 +571,12 @@ const eventHandler = function (eventType, e) {
                         this.cardEditted(this.focusedCard); // move to editting, if applicable
                         this.state = STATES.CARD_SELECTED;
                         break;
+                    } else if (el.matches(".canvas-area")) {
+                        this.focusedCard?.cardMain.classList.remove("focus", "edit-position");
+                        this.focusedCard = null;
+
+                        this.state = STATES.EDIT_TEMPLATE;
+                        break;
                     }
                     console.log("nothing")
                     break;
@@ -1059,22 +1065,6 @@ class CustomCanvas {
             card.cardMain.querySelector(".card-main-content").appendChild(el);
 
         };
-
-        this.el.CreateTemplateFromData = async (cards) => {
-            // TODO make sure you are in editting mode when generating
-            // make sure ids are unique
-            //
-            console.log("creating a new template");
-            console.log(cards);
-
-            let canvas = this.el.querySelector(".canvas-area");
-            canvas.innerHTML = "";
-            this.data.cards = [];
-            this.data.newCards = [];
-            this.data.editedCards = [];
-            this.loadData(cards)
-
-        }
 
         // -----------
         //this.registerOnSave(async function (templateCards, layoutCardData) {
